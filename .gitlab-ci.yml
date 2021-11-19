@@ -1,0 +1,34 @@
+stages:
+  - Build_image
+  - Push_image
+  - Run_docker
+
+before_script:
+  - docker info
+
+Build_image:
+  stage: Build_image
+  script:
+    - docker system prune --force --all
+    - TAG=`yum info app-protect-attack-signatures | grep Version | cut -d':' -f2`
+    - echo $TAG
+    - export DOCKER_BUILDKIT=1
+    - docker build --no-cache --secret id=nginx-crt,src=nginx-repo.crt --secret id=nginx-key,src=nginx-repo.key -t docker:443/app-protect:`echo $TAG` .
+    - echo export TAG=`echo $TAG` > $CI_PROJECT_DIR/variables
+  artifacts:
+    paths:
+    - variables
+
+Push_image:
+  stage: Push_image
+  script:
+    - source $CI_PROJECT_DIR/variables
+    - echo $TAG
+    - docker push docker:443/app-protect:`echo $TAG`
+
+Run_docker:
+  stage: Run_docker
+  script:
+    - source $CI_PROJECT_DIR/variables
+    - echo $TAG
+    - ansible-playbook -i hosts playbook.yaml --extra-var dockertag=`echo $TAG`
