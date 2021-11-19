@@ -1,0 +1,24 @@
+---
+
+    - hosts: docker
+      gather_facts: false
+
+      tasks:
+      - name: Remove Docker App-Protect
+        docker_container:
+          name: app-protect
+          state: absent
+
+      - name: Run Docker App-Protect
+        docker_container:
+          name: app-protect
+          image: docker:443/app-protect:{{dockertag}}
+          pull: yes
+          state: started
+          restart_policy: False
+          ports:
+            - "80:80"
+            - "81:81"
+#          volumes:
+#            - /home/ubuntu/lab-files/nginx.conf:/etc/nginx/nginx.conf
+#            - /home/ubuntu/lab-files/conf.d:/etc/nginx/conf.d
